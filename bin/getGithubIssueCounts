@@ -4,12 +4,10 @@
 require('dotenv').config();
 // Polyfill fetch.
 require('isomorphic-fetch');
-
 const ApolloBoost = require('apollo-boost');
 const ApolloClient = ApolloBoost.default;
 const gql = require('graphql-tag').default;
 const metrics = require('datadog-metrics');
-
 
 metrics.init({ prefix: 'addons.github.counts.' });
 
