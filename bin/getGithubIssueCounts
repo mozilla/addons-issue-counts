@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+// Magically require any env variables defined in a local .env file.
+require('dotenv').config();
+// Polyfill fetch.
+require('isomorphic-fetch');
+
+const ApolloBoost = require('apollo-boost');
+const ApolloClient = ApolloBoost.default;
+const gql = require('graphql-tag').default;
+const metrics = require('datadog-metrics');
+
+
+metrics.init({ prefix: 'addons.github.counts.' });
+
+const headers = {};
+if (process.env.GH_TOKEN) {
+  headers.Authorization = `token ${process.env.GH_TOKEN}`;
+} else {
+  console.error('No GH_TOKEN found');
+  process.exit(1);
+}
+
+if (!process.env.DATADOG_API_KEY) {
+  console.error('No DATADOG_API_KEY provided');
+  process.exit(1);
+}
+
+const client = new ApolloClient({
+  uri: 'https://api.github.com/graphql',
+  headers,
+});
+
+const repos = [
+  'addons',
+  'addons-server',
+  'addons-frontend',
+  'addons-linter',
+];
+
+const issueQuery = gql`
+  query getIssueCounts($repo: String!) {
+    repository(owner: "mozilla", name: $repo) {
+      priority_p1: issues(states: OPEN, labels: ["priority: p1"]) {
+        totalCount
+      }
+      priority_p2: issues(states: OPEN, labels: ["priority: p2"]) {
+        totalCount
+      }
+      priority_p3: issues(states: OPEN, labels: ["priority: p3"]) {
+        totalCount
+      }
+      priority_p4: issues(states: OPEN, labels: ["priority: p4"]) {
+        totalCount
+      }
+      priority_p5: issues(states: OPEN, labels: ["priority: p5"]) {
+        totalCount
+      }
+      component_code_quality: issues(states: OPEN, labels: ["component: code quality"]) {
+        totalCount
+      }
+      type_papercut: issues(states: OPEN, labels: ["type: papercut"]) {
+        totalCount
+      }
+    }
+    rateLimit {
+      limit
+      cost
+      remaining
+      resetAt
+    }
+  }
+`;
+
+const combinedData = {};
+requests = [];
+
+for (const repo of repos) {
+  requests.push(client.query({
+    query: issueQuery,
+    variables: { repo },
+  }).then((result) => {
+    const newData = {};
+    Object.keys(result.data.repository).forEach((key, idx) => {
+      if (key !== '__typename') {
+        newData[key.replace(/_/g, '-')] = result.data.repository[key].totalCount;
+      }
+    });
+    combinedData[repo] = newData;
+  }));
+};
+
+Promise.all(requests)
+  .then(() => {
+    console.log(combinedData);
+    Object.keys(combinedData).forEach((repo, idx) => {
+      Object.keys(combinedData[repo]).forEach((label, idx) => {
+        metrics.gauge(`${repo}.${label}`, parseInt(combinedData[repo][label], 10));
+      });
+    });
+    metrics.flush();
+  });

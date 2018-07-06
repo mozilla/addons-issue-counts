@@ -1,0 +1,22 @@
+{
+  "name": "amo-github-counts",
+  "version": "1.0.0",
+  "description": "Scripts to query github for amo repo counts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "get-stats": "node bin/getGithubIssueCounts"
+  },
+  "author": "",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "apollo-boost": "0.1.10",
+    "datadog-metrics": "0.8.1",
+    "dotenv": "6.0.0",
+    "graphql": "0.13.2",
+    "graphql-tag": "2.9.2",
+    "isomorphic-fetch": "2.2.1",
+    "lokka": "1.7.0",
+    "lokka-transport-http": "1.6.1"
+  }
+}
