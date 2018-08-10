@@ -1,5 +1,5 @@
 {
-  "name": "amo-github-counts",
+  "name": "addons-github-issue-counts",
   "version": "1.0.0",
   "description": "Scripts to query github for amo repo counts",
   "main": "index.js",
