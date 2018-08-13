@@ -3,8 +3,8 @@ jobs:
   getIssues:
     steps:
       - checkout
-      - run: yarn install
-      - run: yarn get-stats
+      - run: npm install
+      - run: npm run get-stats
 
 workflows:
   hourly:
