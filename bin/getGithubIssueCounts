@@ -90,7 +90,6 @@ for (const repo of repos) {
 
 Promise.all(requests)
   .then(() => {
-    console.log(combinedData);
     Object.keys(combinedData).forEach((repo, idx) => {
       Object.keys(combinedData[repo]).forEach((label, idx) => {
         metrics.gauge(`${repo}.${label}`, parseInt(combinedData[repo][label], 10));

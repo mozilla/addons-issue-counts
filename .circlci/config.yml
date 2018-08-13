@@ -1,0 +1,19 @@
+version: 2.0
+jobs:
+  getIssues:
+    steps:
+      - checkout
+      - run: yarn install
+      - run: yarn get-stats
+
+workflows:
+  hourly:
+    triggers:
+      - schedule:
+          cron: "0 * * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - getIssues
