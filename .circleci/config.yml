@@ -1,4 +1,4 @@
-version: 2.0
+version: 2
 jobs:
   getIssues:
     steps:
@@ -7,10 +7,11 @@ jobs:
       - run: npm run get-stats
 
 workflows:
+  version: 2
   hourly:
     triggers:
       - schedule:
-          cron: "0 * * * *"
+          cron: "10 * * * *"
           filters:
             branches:
               only:
