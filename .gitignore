@@ -62,3 +62,5 @@ typings/
 
 # last-run file.
 .last-run
+
+.DS_Store
