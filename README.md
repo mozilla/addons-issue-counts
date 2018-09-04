@@ -10,7 +10,7 @@ Scripts for pushing add-ons specific github issue counts into datadog. Uses gith
 * Update the query and script in `bin/getGithubIssueCounts` to suit your needs.
 * Be sure to update your event naming - see the prefix in `metrics.init`.
 * Add the following tokens to a .env file (to test locally) or circle-ci if you are wanting to use Circle-ci's cron to push the stats into datadog (recommended).
-    * Add `GH_TOKEN` scope should be minimal since this is most likely public data.
+    * Add `GH_TOKEN` you should set this to `public_access` (no scope) since this is most likely public data.
     * Add `DATADOG_API_KEY` (request this key from a datadog admin).
 * Check you're receiving data for your events in datadog.
 * When you're happy run this from Circl-ci and find interesting ways to to graph the data.
