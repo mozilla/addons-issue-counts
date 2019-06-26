@@ -10,11 +10,11 @@
   "author": "Stuart Colville <scolville@mozilla.com>",
   "license": "MPL-2.0",
   "dependencies": {
-    "apollo-boost": "0.1.10",
+    "apollo-boost": "0.4.3",
     "datadog-metrics": "0.8.1",
     "dotenv": "6.0.0",
     "graphql": "0.13.2",
-    "graphql-tag": "2.9.2",
+    "graphql-tag": "2.10.1",
     "isomorphic-fetch": "2.2.1"
   }
 }
