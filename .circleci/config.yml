@@ -8,15 +8,15 @@ jobs:
       - run: npm install
       - run: npm run get-stats
 
-workflows:
-  version: 2
-  hourly:
-    triggers:
-      - schedule:
-          cron: "30 9 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - getIssues
+#workflows:
+#  version: 2
+#  hourly:
+#    triggers:
+#      - schedule:
+#          cron: "30 9 * * *"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#    jobs:
+#      - getIssues
