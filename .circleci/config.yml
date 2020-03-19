@@ -1,13 +1,13 @@
-version: 2
-jobs:
-  getIssues:
-    docker:
-      - image: circleci/node:8
-    steps:
-      - checkout
-      - run: npm install
-      - run: npm run get-stats
-
+#version: 2
+#jobs:
+#  getIssues:
+#    docker:
+#      - image: circleci/node:8
+#    steps:
+#      - checkout
+#      - run: npm install
+#      - run: npm run get-stats
+#
 #workflows:
 #  version: 2
 #  hourly:
