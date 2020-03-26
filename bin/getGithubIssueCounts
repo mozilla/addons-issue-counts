@@ -7,26 +7,58 @@ require('isomorphic-fetch');
 const ApolloBoost = require('apollo-boost');
 const ApolloClient = ApolloBoost.default;
 const gql = require('graphql-tag').default;
-const metrics = require('datadog-metrics');
-
-metrics.init({ prefix: 'addons.github.counts.' });
+const Influx = require('influx');
 
 const headers = {};
 if (process.env.GH_TOKEN) {
   headers.Authorization = `token ${process.env.GH_TOKEN}`;
 } else {
-  console.error('No GH_TOKEN found');
+  console.error('No env var GH_TOKEN found');
   process.exit(1);
 }
 
-if (!process.env.DATADOG_API_KEY) {
-  console.error('No DATADOG_API_KEY provided');
+let influxEnvVarErrorFlag = false;
+
+for (const key of ['HOST', 'PORT', 'DATABASE', 'USER', 'PASSWORD']) {
+  if (!process.env[`INFLUX_DB_${key}`]) {
+    console.error(`No env var for INFLUX_DB_${key} provided`);
+    influxEnvVarErrorFlag = true;
+  }
+}
+if (influxEnvVarErrorFlag) {
   process.exit(1);
 }
 
 const client = new ApolloClient({
   uri: 'https://api.github.com/graphql',
   headers,
+});
+
+
+const influx = new Influx.InfluxDB({
+  host: process.env.INFLUX_DB_HOST,
+  protocol: 'https',
+  port: parseInt(process.env.INFLUX_DB_PORT, 10),
+  database: process.env.INFLUX_DB_DATABASE,
+  username: process.env.INFLUX_DB_USER,
+  password: process.env.INFLUX_DB_PASSWORD,
+  schema: [
+    {
+      measurement: 'addons-gh-issue-counts',
+      fields: {
+        'priority-p1': Influx.FieldType.INTEGER,
+        'priority-p2': Influx.FieldType.INTEGER,
+        'priority-p3': Influx.FieldType.INTEGER,
+        'priority-p4': Influx.FieldType.INTEGER,
+        'priority-p5': Influx.FieldType.INTEGER,
+        'component-code-quality': Influx.FieldType.INTEGER,
+        'type-papercut': Influx.FieldType.INTEGER,
+      },
+      tags: [
+        'repo'
+      ]
+    }
+  ]
 });
 
 const repos = [
@@ -91,10 +123,16 @@ for (const repo of repos) {
 
 Promise.all(requests)
   .then(() => {
+    //console.log(JSON.stringify(combinedData, null, 2));
+    const metricList = [];
     Object.keys(combinedData).forEach((repo, idx) => {
-      Object.keys(combinedData[repo]).forEach((label, idx) => {
-        metrics.gauge(`${repo}.${label}`, parseInt(combinedData[repo][label], 10));
-      });
+      metricList.push({
+        measurement: 'addons-gh-issue-counts',
+        fields: { ...combinedData[repo] },
+        tags: { repo },
+      })
     });
-    metrics.flush();
+    //console.log(JSON.stringify(metricList, null, 2));
+    return influx.writePoints(metricList);
   });
+
