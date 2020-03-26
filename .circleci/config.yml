@@ -1,22 +1,22 @@
-#version: 2
-#jobs:
-#  getIssues:
-#    docker:
-#      - image: circleci/node:8
-#    steps:
-#      - checkout
-#      - run: npm install
-#      - run: npm run get-stats
-#
-#workflows:
-#  version: 2
-#  hourly:
-#    triggers:
-#      - schedule:
-#          cron: "30 9 * * *"
-#          filters:
-#            branches:
-#              only:
-#                - master
-#    jobs:
-#      - getIssues
+version: 2
+jobs:
+  getIssues:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm run get-stats
+
+workflows:
+  version: 2
+  hourly:
+    triggers:
+      - schedule:
+          cron: "30 9 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - getIssues
