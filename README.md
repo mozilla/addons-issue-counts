@@ -1,4 +1,4 @@
-# addons-github-issue-counts
+# addons-issue-counts
 
 Scripts for pushing add-ons specific github issue counts into influxdb. Uses github's GraphQL API and node-influx to push stats into influxdb easy graphing.
 
