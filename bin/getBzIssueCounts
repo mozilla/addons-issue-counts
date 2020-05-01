@@ -1,0 +1,118 @@
+#!/usr/bin/env node
+
+// Magically require any env variables defined in a local .env file.
+require('dotenv').config();
+
+const fetch = require('node-fetch');
+const queryString = require('query-string');
+const Influx = require('influx');
+
+// Bail early if env vars are missing.
+let influxEnvVarErrorFlag = false;
+for (const key of ['HOST', 'PORT', 'DATABASE', 'USER', 'PASSWORD']) {
+  if (!process.env[`INFLUX_DB_${key}`]) {
+    console.error(`No env var for INFLUX_DB_${key} provided`);
+    influxEnvVarErrorFlag = true;
+  }
+}
+if (influxEnvVarErrorFlag) {
+  process.exit(1);
+}
+
+const baseAPIURL = 'https://bugzilla.mozilla.org/rest/bug';
+const priorities = ['P1', 'P2', 'P3', 'P4', 'P5'];
+const products = [
+  'Toolkit',
+  'WebExtensions',
+];
+
+const defaultParams = {
+  include_fields: 'whatever',
+  bug_status: [
+    'UNCONFIRMED',
+    'NEW',
+    'ASSIGNED',
+    'REOPENED',
+  ],
+  classification: [
+    'Client Software',
+    'Developer Infrastructure',
+    'Components',
+    'Server Software',
+    'Other',
+  ],
+  email1: 'nobody%40mozilla.org',
+  emailtype1: 'notequals',
+};
+
+
+function fetchIssueCount({priority, product} = {}) {
+  const params = { ...defaultParams, product, priority };
+  if (product === 'Toolkit') {
+    params.component = 'Add-ons Manager';
+  }
+  const url = `${baseAPIURL}?${queryString.stringify(params)}`;
+  return fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  .then(res => res.json())
+  .then(json => {
+    return json.bugs.length;
+  });
+}
+
+const influx = new Influx.InfluxDB({
+  host: process.env.INFLUX_DB_HOST,
+  protocol: 'https',
+  port: parseInt(process.env.INFLUX_DB_PORT, 10),
+  database: process.env.INFLUX_DB_DATABASE,
+  username: process.env.INFLUX_DB_USER,
+  password: process.env.INFLUX_DB_PASSWORD,
+  schema: [
+    {
+      measurement: 'addons-bz-issue-counts',
+      fields: {
+        'priority-p1': Influx.FieldType.INTEGER,
+        'priority-p2': Influx.FieldType.INTEGER,
+        'priority-p3': Influx.FieldType.INTEGER,
+        'priority-p4': Influx.FieldType.INTEGER,
+        'priority-p5': Influx.FieldType.INTEGER,
+      },
+      tags: [
+        'product'
+      ]
+    }
+  ]
+});
+
+
+const requests = [];
+const combinedData = {};
+
+for (const product of products) {
+  combinedData[product] = {};
+  for (const priority of priorities) {
+    requests.push(fetchIssueCount({
+        product,
+        priority
+      }).then((result) => {
+        combinedData[product][`priority-${priority.toLowerCase()}`] = result;
+      })
+    );
+  }
+}
+
+Promise.all(requests)
+  .then(() => {
+    // console.log(JSON.stringify(combinedData, null, 2));
+    const metricList = [];
+    Object.keys(combinedData).forEach((product, idx) => {
+      metricList.push({
+        measurement: 'addons-bz-issue-counts',
+        fields: { ...combinedData[product] },
+        tags: { product: product.toLowerCase() },
+      })
+    });
+    // console.log(JSON.stringify(metricList, null, 2));
+    return influx.writePoints(metricList);
+  });
