@@ -27,6 +27,8 @@ const products = [
 ];
 
 const defaultParams = {
+  // The string for includ_fields can be anything.
+  // This is just to ensure it's not actually pulling any data since we only need a count.
   include_fields: 'whatever',
   bug_status: [
     'UNCONFIRMED',
