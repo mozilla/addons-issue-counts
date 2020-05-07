@@ -20,14 +20,15 @@ if (influxEnvVarErrorFlag) {
 }
 
 const baseAPIURL = 'https://bugzilla.mozilla.org/rest/bug';
-const priorities = ['P1', 'P2', 'P3', 'P4', 'P5'];
+const priorities = ['--', 'P1', 'P2', 'P3', 'P4', 'P5'];
+const severities = ['--', 'N/A', 'S1', 'S2', 'S3', 'S4'];
 const products = [
   'Toolkit',
   'WebExtensions',
 ];
 
 const defaultParams = {
-  // The string for includ_fields can be anything.
+  // The string for include_fields can be anything.
   // This is just to ensure it's not actually pulling any data since we only need a count.
   include_fields: 'whatever',
   bug_status: [
@@ -43,13 +44,25 @@ const defaultParams = {
     'Server Software',
     'Other',
   ],
-  email1: 'nobody%40mozilla.org',
-  emailtype1: 'notequals',
+  // email1: 'nobody%40mozilla.org',
+  // emailtype1: 'notequals',
 };
 
 
-function fetchIssueCount({priority, product} = {}) {
-  const params = { ...defaultParams, product, priority };
+function fetchIssueCount({priority, product, severity} = {}) {
+  const params = { ...defaultParams, product, priority, severity };
+  if (params.priority && params.severity) {
+    throw new Error('Query only severity or priority independently');
+  }
+  if (severity) {
+    delete params.priority;
+  }
+  if (priority) {
+    delete params.severity;
+  }
+
+  // console.log(JSON.stringify(params, null, 2));
+
   if (product === 'Toolkit') {
     params.component = 'Add-ons Manager';
   }
@@ -74,11 +87,18 @@ const influx = new Influx.InfluxDB({
     {
       measurement: 'addons-bz-issue-counts',
       fields: {
+        'priority-default': Influx.FieldType.INTEGER,
         'priority-p1': Influx.FieldType.INTEGER,
         'priority-p2': Influx.FieldType.INTEGER,
         'priority-p3': Influx.FieldType.INTEGER,
         'priority-p4': Influx.FieldType.INTEGER,
         'priority-p5': Influx.FieldType.INTEGER,
+        'severity-default': Influx.FieldType.INTEGER,
+        'severity-not-applicable': Influx.FieldType.INTEGER,
+        'severity-s1': Influx.FieldType.INTEGER,
+        'severity-s2': Influx.FieldType.INTEGER,
+        'severity-s3': Influx.FieldType.INTEGER,
+        'severity-s4': Influx.FieldType.INTEGER,
       },
       tags: [
         'product'
@@ -98,7 +118,35 @@ for (const product of products) {
         product,
         priority
       }).then((result) => {
-        combinedData[product][`priority-${priority.toLowerCase()}`] = result;
+        switch(priority) {
+          case '--':
+            priorityLabel = 'default';
+            break;
+          default:
+            priorityLabel = priority.toLowerCase();
+        }
+        combinedData[product][`priority-${priorityLabel}`] = result;
+      })
+    );
+  }
+
+  for (const severity of severities) {
+    requests.push(fetchIssueCount({
+        product,
+        severity,
+      }).then((result) => {
+        let severityLabel = severity;
+        switch(severity) {
+          case 'N/A':
+            severityLabel = 'not-applicable';
+            break;
+          case '--':
+            severityLabel = 'default';
+            break;
+          default:
+            severityLabel = severity.toLowerCase();
+        }
+        combinedData[product][`severity-${severityLabel}`] = result;
       })
     );
   }
