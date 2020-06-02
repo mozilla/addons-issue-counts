@@ -21,7 +21,7 @@ if (influxEnvVarErrorFlag) {
 
 const baseAPIURL = 'https://bugzilla.mozilla.org/rest/bug';
 const priorities = ['--', 'P1', 'P2', 'P3', 'P4', 'P5'];
-const severities = ['--', 'N/A', 'S1', 'S2', 'S3', 'S4'];
+const severities = ['normal', '--', 'N/A', 'S1', 'S2', 'S3', 'S4'];
 const products = [
   'Toolkit',
   'WebExtensions',
@@ -67,6 +67,7 @@ function fetchIssueCount({priority, product, severity} = {}) {
     params.component = 'Add-ons Manager';
   }
   const url = `${baseAPIURL}?${queryString.stringify(params)}`;
+  // console.log(url);
   return fetch(url, {
     headers: { 'Content-Type': 'application/json' },
   })
@@ -93,6 +94,7 @@ const influx = new Influx.InfluxDB({
         'priority-p3': Influx.FieldType.INTEGER,
         'priority-p4': Influx.FieldType.INTEGER,
         'priority-p5': Influx.FieldType.INTEGER,
+        'severity-normal': Influx.FieldType.INTEGER,
         'severity-default': Influx.FieldType.INTEGER,
         'severity-not-applicable': Influx.FieldType.INTEGER,
         'severity-s1': Influx.FieldType.INTEGER,
