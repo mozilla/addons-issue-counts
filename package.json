@@ -11,7 +11,7 @@
   "author": "Stuart Colville <scolville@mozilla.com>",
   "license": "MPL-2.0",
   "dependencies": {
-    "apollo-boost": "0.4.7",
+    "apollo-boost": "0.4.9",
     "dotenv": "8.2.0",
     "graphql": "15.0.0",
     "graphql-tag": "2.10.3",
