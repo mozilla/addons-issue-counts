@@ -20,12 +20,12 @@ if (influxEnvVarErrorFlag) {
 }
 
 const whiteboardTags = [
-  'mv3:m1',
-  'mv3:m2',
-  'mv3:m3',
-  'mv3:m4',
-  'mv3:m5',
-  'mv3:future',
+  '[mv3-m1]',
+  '[mv3-m2]',
+  '[mv3-m3]',
+  '[mv3-m4]',
+  '[mv3-m5]',
+  '[mv3-future]',
   'stockwell',
   'addons-ux',
   'prod_bug',
@@ -213,7 +213,7 @@ for (const product of products) {
 for (const tag of whiteboardTags) {
   requests.push(fetchWhiteboardTag(tag)
     .then((result) => {
-      combinedData.combined[`whiteboard-${tag.replace(':', '-')}`] = result;
+      combinedData.combined[`whiteboard-${tag.replace('[', '').replace(']', '')}`] = result;
     })
   );
 }
