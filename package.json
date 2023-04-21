@@ -14,7 +14,7 @@
     "apollo-boost": "0.4.9",
     "dotenv": "8.2.0",
     "graphql": "15.1.0",
-    "graphql-tag": "2.10.3",
+    "graphql-tag": "2.12.6",
     "influx": "5.5.1",
     "isomorphic-fetch": "2.2.1",
     "node-fetch": "2.6.7",
